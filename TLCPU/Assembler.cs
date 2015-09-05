@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
+using TLCPU.Interfaces;
 using System.Threading.Tasks;
 
 namespace TLCPU
@@ -24,6 +24,13 @@ namespace TLCPU
         }
         protected CPU _cpu;
         protected List<Label> Labels = new List<Label>();
+        protected IOpcodes Language
+        {
+            get
+            {
+                return _cpu.Language;
+            }
+        }
 
         public bool TraceOutput { get; set; }
 
@@ -41,7 +48,7 @@ namespace TLCPU
             foreach (var line in lines)
             {
                 Trace(";" + line);
-                currentAddress = Translate(line, currentAddress);
+                currentAddress = AssembleLine(line, currentAddress);
             }
             if (Labels.Any())
             {
@@ -84,7 +91,7 @@ namespace TLCPU
             var results = options.IncludeInitialAddress ? string.Format("\t{0:X4}: ", address) : "\t";
 
             var instruction = _cpu.RAM[address];
-            var opcode = Opcodes.List.FirstOrDefault(o => o.Code == instruction);
+            var opcode = Language.List.FirstOrDefault(o => o.Code == instruction);
             if (opcode == null)
             {
                 results += string.Format("!0x{0:X4}", instruction);
@@ -136,7 +143,7 @@ namespace TLCPU
             return label;
         }
 
-        protected int Translate(string line, int addr)
+        protected int AssembleLine(string line, int addr)
         {
             line = line.Trim();
             if (string.IsNullOrWhiteSpace(line)) return addr;
@@ -163,7 +170,16 @@ namespace TLCPU
                 var values = codes.Split(',');
                 foreach (var stringValue in values.Select(v => v.Trim()))
                 {
-                    var value = Convert.ToInt32(stringValue);
+                    int value;
+                    if (stringValue.StartsWith("0x"))
+                    {
+                        var xVal = stringValue.Substring(2);
+                        value = Convert.ToInt32(xVal, 16);
+                    }
+                    else
+                    {
+                        value = Convert.ToInt32(stringValue);
+                    }
                     _cpu.RAM[addr++] = value;
                 }
                 return addr;
@@ -171,7 +187,8 @@ namespace TLCPU
 
             var parts = source.Split(' ').Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
 
-            var opcode = Opcodes.List.FirstOrDefault(o => o.Mnemonic == parts[0].ToUpperInvariant());
+            //var opcode = Opcodes.List.FirstOrDefault(o => o.Mnemonic == parts[0].ToUpperInvariant());
+            var opcode = Language.Find(source);
             if (opcode == null) throw new SyntaxErrorException("Syntax error: " + source);
             if (opcode.Length == parts.Length)
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TLCPU.Interfaces;
 
 namespace TLCPU
 {
@@ -19,13 +20,22 @@ namespace TLCPU
             return new CPU(stacksize, ramsize, callStackSize);
         }
 
+        public static CPU Boot(IOpcodes language, int stacksize, int ramsize, int callStackSize = 128)
+        {
+            var cpu = Boot(stacksize, ramsize, callStackSize);
+            cpu.Language = language;
+            return cpu;
+        }
+
         public int StackSize { get; private set; }
         public int RAMSize { get; private set; }
         public int CallStackSize { get; private set; }
+        public IOpcodes Language { get; private set; }
         public Flags Flags { get; private set; }
 
         protected CPU(int stacksize, int ramsize, int callStackSize = 128)
         {
+            Language = new TLAssembly();
             RAMSize = ramsize;
             StackSize = stacksize;
             CallStackSize = callStackSize;
@@ -106,7 +116,8 @@ namespace TLCPU
         protected Opcode ReadInstruction()
         {
             var code = RAM[Registers.IP];
-            var opcode = Opcodes.List.FirstOrDefault(c => c.Code == code) ?? Opcodes.NOP;
+            //var opcode = Opcodes.List.FirstOrDefault(c => c.Code == code) ?? TLAssembly.NOP;
+            var opcode = Language.Find(code);
             //opcode.Data.Clear();
             //for (var i = 0; i < opcode.Length; i++)
             for (var i = 1; i < opcode.Length; i++)

@@ -43,8 +43,17 @@ namespace TLCPU
         [JsonProperty("parameters")]
         public IList<Parameter> Parameters { get; private set; }
 
-        //	[JsonIgnore]
-        //	public List<int> Data { get; private set; }
+        [JsonIgnore]
+        public string UniqueID { 
+            get {
+                var parmCodes = string.Empty;
+                foreach (var p in Parameters)
+                {
+                    parmCodes += p.ParameterType.ToString().Substring(0, 1);
+                }
+               return string.Format("{0}.{1}", Mnemonic, parmCodes);
+            }
+        }
 
         [JsonIgnore]
         public Action<CPU> Execute { get; private set; }

@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TLCPU.Interfaces;
 
 namespace TLCPU
 {
-    public static class Opcodes
+
+    public class TLAssembly : IOpcodes
     {
 
-        public static List<Opcode> List { get; set; }
+        public List<Opcode> List { get; set; }
 
-        static Opcodes()
+        public TLAssembly()
         {
 
             List = new List<Opcode>();
@@ -110,8 +112,31 @@ namespace TLCPU
             List.Add(SMUL = new Opcode(code++, "SMUL", "Pop two stack values, multiply, and push back to stack.", operation: cpu => cpu.Push(cpu.Pop() * cpu.Pop())));
             #endregion
 
-            List.Add(END = new Opcode(65535, "END", "Exit CPU", operation: cpu => cpu.Interrupt(Opcodes.END)));
+            List.Add(END = new Opcode(65535, "END", "Exit CPU", operation: cpu => cpu.Interrupt(TLAssembly.END)));
 
+        }
+
+        public Opcode Find(string sourceLine)
+        {
+            var parts = sourceLine.Split(' ').Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
+            var code = parts[0] + ".";
+            for (var i = 1; i < parts.Length; i++)
+            {
+                if (parts[i].StartsWith(":"))
+                {
+                    code += 'A';
+                } else
+                {
+                    code += 'V';
+                }
+            }
+
+            return List.FirstOrDefault(p => p.UniqueID == code) ?? NOP;
+        }
+
+        public Opcode Find(int code)
+        {
+            return List.FirstOrDefault(p => p.Code == code) ?? NOP;
         }
 
         #region Properties
