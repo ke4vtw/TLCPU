@@ -1,0 +1,21 @@
+﻿GOTO   :ApplicationStart                         ;Jump to the specified address.
+  NOP                                              ;No Operation. Do nothing.
+  !0x0001
+  !0x0002
+  !0x0003
+  !0x0004
+:ApplicationStart
+  LODCX  0005                                      ;Load CX register
+  LODAX  0002                                      ;Load AX register
+:TopOfLoop
+  CALL   :Subroutine                               ;Push Reg.IP and jump to the specified address.
+  LOOP   :TopOfLoop                                ;If CX > 0, dec cx and jump to specified address
+  GOTO   :EndProgram                               ;Jump to the specified address.
+:Subroutine
+  PUSHAX                                           ;Push AX to the stack.
+  PUSHAX                                           ;Push AX to the stack.
+  SADD                                             ;Pop two stack values, add together, and push back to stack.
+  POPAX                                            ;Pop value on stack to AX.
+  RETR                                             ;Pop address pushed by CALL and resume processing.
+:EndProgram
+  END                                              ;Exit CPU
